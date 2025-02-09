@@ -70,13 +70,25 @@
             const video = document.getElementById("video");
             const player = new shaka.Player(video);
 
-            try {
-                await player.load(url);
-                console.log("Stream loaded successfully");
-            } catch (error) {
-                alert("Error loading stream");
-                console.error(error);
-            }
+            // Keep loading, no stopping on errors
+            player.configure({
+                streaming: {
+                    rebufferingGoal: 10,  // More buffer time
+                    bufferingGoal: 30,    // Max buffer
+                    retryParameters: {    // Retry indefinitely
+                        maxAttempts: Infinity,
+                        baseDelay: 2000,
+                        backoffFactor: 2,
+                        fuzzFactor: 0.5
+                    }
+                }
+            });
+
+            player.load(url).then(() => {
+                console.log("Stream started...");
+            }).catch(err => {
+                console.log("Stream loading... (waiting for response)");
+            });
         }
 
         document.addEventListener("DOMContentLoaded", loadPlayer);

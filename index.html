@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Player</title>
+    <script src="https://cdn.jwplayer.com/libraries/SAHhwvZq.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        #player-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: black;
+        }
+
+        .input-container {
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        input {
+            width: 70%;
+            padding: 10px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="input-container">
+        <input type="text" id="playlist-url" placeholder="Enter M3U8 URL here...">
+        <button onclick="loadStream()">Load Stream</button>
+    </div>
+    <div id="player-container"></div>
+
+    <script>
+        // Initialize JW Player
+        const player = jwplayer('player-container').setup({
+            playlist: [{
+                file: 'https://cdn.jwplayer.com/manifests/4uDQUk1Z.m3u8' // Default sample stream
+            }],
+            width: '100%',
+            aspectratio: '16:9',
+            autostart: false,
+            mute: false,
+            primary: 'html5'
+        });
+
+        function loadStream() {
+            const streamUrl = document.getElementById('playlist-url').value;
+            if (streamUrl) {
+                player.load([{
+                    file: streamUrl
+                }]);
+                player.play();
+            }
+        }
+
+        // Handle errors
+        player.on('error', function(e) {
+            alert('Error loading stream: ' + e.message);
+        });
+    </script>
+
+    <!-- Legal Disclaimer (IMPORTANT) -->
+    <div style="max-width: 1200px; margin: 20px auto; color: #666; font-size: 12px;">
+        <p>Disclaimer: This player is for educational purposes only. Use of this player to access unauthorized content is strictly prohibited. The user is solely responsible for ensuring they have proper rights to access any content played through this platform.</p>
+    </div>
+</body>
+</html>

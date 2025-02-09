@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV M3U Playlist Player</title>
-    <script src="https://cdn.jwplayer.com/libraries/SAHhwvZq.js"></script>
+    <title>IPTV M3U Playlist</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,10 +11,6 @@
             color: white;
             text-align: center;
             padding: 10px;
-        }
-        #player-container {
-            width: 80%;
-            margin: auto;
         }
         input, button, select {
             margin: 10px;
@@ -60,23 +55,17 @@
     </style>
 </head>
 <body>
-    <h1>IPTV M3U Playlist Player</h1>
+    <h1>IPTV M3U Playlist</h1>
     <input type="text" id="m3u_url" placeholder="Enter M3U Playlist URL" />
     <button onclick="loadPlaylist()">Load Playlist</button>
     <br>
 
-    <!-- Search and Category Selection -->
     <input type="text" id="searchBox" onkeyup="searchChannels()" placeholder="Search Channels...">
     <select id="categoryList" onchange="updateChannels()">
         <option value="">Select a Category</option>
     </select>
 
-    <!-- Channel Grid -->
     <div id="channelGrid"></div>
-
-    <div id="player-container">
-        <div id="player"></div>
-    </div>
 
     <script>
         let categorizedChannels = {};
@@ -127,7 +116,7 @@
                 categoryList.appendChild(option);
             });
 
-            updateChannels(); // Load first category by default
+            updateChannels();
         }
 
         function updateChannels() {
@@ -140,21 +129,8 @@
                     let div = document.createElement("div");
                     div.classList.add("channel-card");
                     div.textContent = channel.name;
-                    div.setAttribute("data-url", channel.url);
-                    div.onclick = () => playChannel(channel.url);
+                    div.onclick = () => openPlayer(channel.name, channel.url);
                     channelGrid.appendChild(div);
-                });
-            }
-        }
-
-        function playChannel(url) {
-            if (url) {
-                jwplayer("player").setup({
-                    file: url,
-                    width: "100%",
-                    aspectratio: "16:9",
-                    autostart: true,
-                    skin: { name: "seven" }
                 });
             }
         }
@@ -170,6 +146,10 @@
                     card.classList.add("hidden");
                 }
             }
+        }
+
+        function openPlayer(name, url) {
+            window.location.href = `player.html?name=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}`;
         }
     </script>
 </body>

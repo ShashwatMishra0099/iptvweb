@@ -1,82 +1,73 @@
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supabase Google Login</title>
     <style>
-      body {
-        font-family: sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background: #f5f5f5;
-      }
-      #login-button {
-        padding: 10px 20px;
-        font-size: 1rem;
-        border: none;
-        background: #4285f4;
-        color: #fff;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-      #login-button:hover {
-        background: #357ae8;
-      }
-      #status {
-        margin-top: 20px;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #f5f5f5;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4285F4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #357AE8;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
+
     <h1>Login with Google</h1>
     <button id="login-button">Sign in with Google</button>
-    <div id="status"></div>
-    
-    <!-- Include the Supabase client from CDN -->
+    <p id="status"></p>
+
+    <!-- Include Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script>
-      // Your Supabase project details
-      const supabaseUrl = "https://kctklrigzowizlxlblat.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk";
-      
-      // Initialize Supabase client
-      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Supabase credentials
+            const supabaseUrl = "https://kctklrigzowizlxlblat.supabase.co";
+            const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk";
+            const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      const loginButton = document.getElementById("login-button");
-      const statusDiv = document.getElementById("status");
+            // Button click event
+            document.getElementById("login-button").addEventListener("click", async () => {
+                document.getElementById("status").textContent = "Redirecting to Google login...";
+                try {
+                    const { error } = await supabase.auth.signInWithOAuth({
+                        provider: "google",
+                        options: {
+                            redirectTo: "https://kctklrigzowizlxlblat.supabase.co/auth/v1/callback"
+                        }
+                    });
+                    if (error) throw error;
+                } catch (err) {
+                    console.error("Login Error:", err);
+                    document.getElementById("status").textContent = "Login failed. Check console for details.";
+                }
+            });
 
-      // Function to trigger Google OAuth login
-      loginButton.addEventListener("click", async () => {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-           options: { redirectTo: "https://kctklrigzowizlxlblat.supabase.co/auth/v1/callback" }
-  });
-  if (error) console.error("Error:", error);
-};
-            // Optionally, you can specify redirect URL here
-            // redirectTo: window.location.href
-          }
+            // Check if user is already logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                document.getElementById("status").textContent = `Logged in as: ${session.user.email}`;
+            }
         });
-        
-        if (error) {
-          console.error("OAuth Error:", error);
-          statusDiv.textContent = "Error during login. Check the console for details.";
-        } else {
-          console.log("OAuth Data:", data);
-          statusDiv.textContent = "Redirecting to Google for authentication...";
-        }
-      });
-
-      // Optional: Listen for changes in auth state and display user info if logged in
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          statusDiv.textContent = `Logged in as: ${session.user.email}`;
-        }
-      });
     </script>
-  </body>
+
+</body>
 </html>

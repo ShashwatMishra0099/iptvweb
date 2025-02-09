@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPTV Player with Channel List</title>
-    <script src="https://cdn.jwplayer.com/libraries/SAHhwvZq.js"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- JW Player Script (loaded dynamically later) -->
     <style>
         body {
             margin: 0;
@@ -16,8 +18,9 @@
         
         #player-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: black;
+            display: none; /* Hidden by default */
         }
 
         .channel-list {
@@ -45,26 +48,87 @@
             text-align: center;
             padding: 20px;
         }
+
+        .auth-section {
+            max-width: 1200px;
+            margin: 20px auto;
+            text-align: right;
+        }
+
+        .auth-button {
+            padding: 10px 20px;
+            background: #007bff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .auth-button:hover {
+            background: #0056b3;
+        }
     </style>
 </head>
 <body>
+    <div class="auth-section">
+        <button class="auth-button" id="login-button">Login with Google</button>
+        <button class="auth-button" id="logout-button" style="display: none;">Logout</button>
+    </div>
     <div class="loading" id="loading">Loading channels...</div>
     <div id="player-container"></div>
     <div class="channel-list" id="channel-list"></div>
 
     <script>
+        // Supabase Configuration
+        const supabaseUrl = 'https://kctklrigzowizlxlblat.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // DOM Elements
         const playerContainer = document.getElementById('player-container');
         const channelList = document.getElementById('channel-list');
         const loading = document.getElementById('loading');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
 
-        // Initialize JW Player
-        const player = jwplayer(playerContainer).setup({
-            width: '100%',
-            aspectratio: '16:9',
-            autostart: false,
-            mute: false,
-            primary: 'html5'
-        });
+        let player = null; // JW Player instance
+
+        // Check authentication state
+        async function checkAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                loginButton.style.display = 'none';
+                logoutButton.style.display = 'inline-block';
+                loadPlaylist();
+            } else {
+                loginButton.style.display = 'inline-block';
+                logoutButton.style.display = 'none';
+            }
+        }
+
+        // Google Login
+        async function login() {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+            });
+            if (error) {
+                alert('Login failed: ' + error.message);
+            }
+        }
+
+        // Logout
+        async function logout() {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                alert('Logout failed: ' + error.message);
+            } else {
+                location.reload(); // Refresh the page
+            }
+        }
+
+        // Event Listeners for Auth Buttons
+        loginButton.addEventListener('click', login);
+        logoutButton.addEventListener('click', logout);
 
         // Function to parse M3U playlist
         async function parsePlaylist(url) {
@@ -108,21 +172,43 @@
 
         // Function to play selected channel
         function playChannel(url) {
-            player.load([{
-                file: url,
-                title: 'Live Stream'
-            }]);
-            player.play();
+            if (!player) {
+                // Dynamically load JW Player script
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jwplayer.com/libraries/SAHhwvZq.js';
+                script.onload = () => {
+                    player = jwplayer(playerContainer).setup({
+                        file: url,
+                        width: '100%',
+                        aspectratio: '16:9',
+                        autostart: true,
+                        mute: false,
+                        primary: 'html5'
+                    });
+                    playerContainer.style.display = 'block';
+                };
+                document.head.appendChild(script);
+            } else {
+                player.load([{ file: url }]);
+                player.play();
+            }
         }
 
         // Handle errors
-        player.on('error', function(e) {
-            alert('Error loading stream: ' + e.message);
-        });
+        window.onerror = function (message, source, lineno, colno, error) {
+            alert('Error: ' + message);
+        };
 
         // Load your playlist URL here
-        const playlistUrl = 'https://iptv-org.github.io/iptv/index.m3u'; // Replace with your actual playlist URL
-        parsePlaylist(playlistUrl);
+        const playlistUrl = 'https://amitb3669.github.io/jiobe1.m3u/'; // Replace with your actual playlist URL
+
+        // Initialization
+        checkAuth();
+
+        // Load playlist after authentication
+        async function loadPlaylist() {
+            await parsePlaylist(playlistUrl);
+        }
     </script>
 
     <!-- Legal Disclaimer -->

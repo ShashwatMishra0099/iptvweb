@@ -1,219 +1,79 @@
+
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV Player with Channel List</title>
-    <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- JW Player Script (loaded dynamically later) -->
+  <head>
+    <meta charset="UTF-8" />
+    <title>Supabase Google Login</title>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: #1a1a1a;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        
-        #player-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            background: black;
-            display: none; /* Hidden by default */
-        }
-
-        .channel-list {
-            max-width: 1200px;
-            margin: 20px auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .channel-item {
-            padding: 10px;
-            background: #333;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .channel-item:hover {
-            background: #444;
-        }
-
-        .loading {
-            display: none;
-            color: #fff;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .auth-section {
-            max-width: 1200px;
-            margin: 20px auto;
-            text-align: right;
-        }
-
-        .auth-button {
-            padding: 10px 20px;
-            background: #007bff;
-            border: none;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .auth-button:hover {
-            background: #0056b3;
-        }
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: #f5f5f5;
+      }
+      #login-button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        border: none;
+        background: #4285f4;
+        color: #fff;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      #login-button:hover {
+        background: #357ae8;
+      }
+      #status {
+        margin-top: 20px;
+      }
     </style>
-</head>
-<body>
-    <div class="auth-section">
-        <button class="auth-button" id="login-button">Login with Google</button>
-        <button class="auth-button" id="logout-button" style="display: none;">Logout</button>
-    </div>
-    <div class="loading" id="loading">Loading channels...</div>
-    <div id="player-container"></div>
-    <div class="channel-list" id="channel-list"></div>
-
+  </head>
+  <body>
+    <h1>Login with Google</h1>
+    <button id="login-button">Sign in with Google</button>
+    <div id="status"></div>
+    
+    <!-- Include the Supabase client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script>
-        // Supabase Configuration
-        const supabaseUrl = 'https://kctklrigzowizlxlblat.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+      // Your Supabase project details
+      const supabaseUrl = "https://kctklrigzowizlxlblat.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk";
+      
+      // Initialize Supabase client
+      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // DOM Elements
-        const playerContainer = document.getElementById('player-container');
-        const channelList = document.getElementById('channel-list');
-        const loading = document.getElementById('loading');
-        const loginButton = document.getElementById('login-button');
-        const logoutButton = document.getElementById('logout-button');
+      const loginButton = document.getElementById("login-button");
+      const statusDiv = document.getElementById("status");
 
-        let player = null; // JW Player instance
-
-        // Check authentication state
-        async function checkAuth() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'inline-block';
-                loadPlaylist();
-            } else {
-                loginButton.style.display = 'inline-block';
-                logoutButton.style.display = 'none';
-            }
+      // Function to trigger Google OAuth login
+      loginButton.addEventListener("click", async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            // Optionally, you can specify redirect URL here
+            // redirectTo: window.location.href
+          }
+        });
+        
+        if (error) {
+          console.error("OAuth Error:", error);
+          statusDiv.textContent = "Error during login. Check the console for details.";
+        } else {
+          console.log("OAuth Data:", data);
+          statusDiv.textContent = "Redirecting to Google for authentication...";
         }
+      });
 
-        // Google Login
-        async function login() {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-            });
-            if (error) {
-                alert('Login failed: ' + error.message);
-            }
+      // Optional: Listen for changes in auth state and display user info if logged in
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          statusDiv.textContent = `Logged in as: ${session.user.email}`;
         }
-
-        // Logout
-        async function logout() {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                alert('Logout failed: ' + error.message);
-            } else {
-                location.reload(); // Refresh the page
-            }
-        }
-
-        // Event Listeners for Auth Buttons
-        loginButton.addEventListener('click', login);
-        logoutButton.addEventListener('click', logout);
-
-        // Function to parse M3U playlist
-        async function parsePlaylist(url) {
-            try {
-                loading.style.display = 'block';
-                const response = await fetch(url);
-                const text = await response.text();
-                const lines = text.split('\n');
-                const channels = [];
-
-                for (let i = 0; i < lines.length; i++) {
-                    if (lines[i].startsWith('#EXTINF:')) {
-                        const channel = {
-                            name: lines[i].split(',')[1].trim(),
-                            url: lines[i + 1].trim()
-                        };
-                        channels.push(channel);
-                    }
-                }
-
-                displayChannels(channels);
-            } catch (error) {
-                console.error('Error loading playlist:', error);
-                alert('Error loading playlist. Please check the URL.');
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        // Function to display channels
-        function displayChannels(channels) {
-            channelList.innerHTML = '';
-            channels.forEach(channel => {
-                const channelItem = document.createElement('div');
-                channelItem.className = 'channel-item';
-                channelItem.textContent = channel.name;
-                channelItem.addEventListener('click', () => playChannel(channel.url));
-                channelList.appendChild(channelItem);
-            });
-        }
-
-        // Function to play selected channel
-        function playChannel(url) {
-            if (!player) {
-                // Dynamically load JW Player script
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jwplayer.com/libraries/SAHhwvZq.js';
-                script.onload = () => {
-                    player = jwplayer(playerContainer).setup({
-                        file: url,
-                        width: '100%',
-                        aspectratio: '16:9',
-                        autostart: true,
-                        mute: false,
-                        primary: 'html5'
-                    });
-                    playerContainer.style.display = 'block';
-                };
-                document.head.appendChild(script);
-            } else {
-                player.load([{ file: url }]);
-                player.play();
-            }
-        }
-
-        // Handle errors
-        window.onerror = function (message, source, lineno, colno, error) {
-            alert('Error: ' + message);
-        };
-
-        // Load your playlist URL here
-        const playlistUrl = 'https://amitb3669.github.io/jiobe1.m3u/'; // Replace with your actual playlist URL
-
-        // Initialization
-        checkAuth();
-
-        // Load playlist after authentication
-        async function loadPlaylist() {
-            await parsePlaylist(playlistUrl);
-        }
+      });
     </script>
-
-    <!-- Legal Disclaimer -->
-    <div style="max-width: 1200px; margin: 20px auto; color: #666; font-size: 12px;">
-        <p>Disclaimer: This player is for educational purposes only. Use of this player to access unauthorized content is strictly prohibited. The user is solely responsible for ensuring they have proper rights to access any content played through this platform.</p>
-    </div>
-</body>
+  </body>
 </html>

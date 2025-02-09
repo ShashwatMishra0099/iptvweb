@@ -1,72 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Supabase Google Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 50px;
-      background-color: #f5f5f5;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #4285f4;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #357ae8;
-    }
-    #status {
-      margin-top: 20px;
-      font-size: 16px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV M3U Playlist Player</title>
+    <script src="https://cdn.jwplayer.com/libraries/SAHhwvZq.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        #player-container {
+            width: 80%;
+            margin: auto;
+        }
+        input, button, select {
+            margin: 10px;
+            padding: 10px;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 5px;
+            border: none;
+        }
+        button {
+            background: #6200ea;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #3700b3;
+        }
+        select {
+            background: #333;
+            color: white;
+        }
+        #channelGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .channel-card {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .channel-card:hover {
+            background: #444;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <h1>Sign in with Google</h1>
-  <button id="login-button">Sign in with Google</button>
-  <p id="status"></p>
+    <h1>IPTV M3U Playlist Player</h1>
+    <input type="text" id="m3u_url" placeholder="Enter M3U Playlist URL" />
+    <button onclick="loadPlaylist()">Load Playlist</button>
+    <br>
 
-  <!-- Include Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      // Initialize Supabase client with your project URL and anon key
-      const supabaseUrl = "https://kctklrigzowizlxlblat.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk";
-      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    <!-- Search and Category Selection -->
+    <input type="text" id="searchBox" onkeyup="searchChannels()" placeholder="Search Channels...">
+    <select id="categoryList" onchange="updateChannels()">
+        <option value="">Select a Category</option>
+    </select>
 
-      // Attach event listener to the login button
-      const loginButton = document.getElementById("login-button");
-      loginButton.addEventListener("click", async function () {
-        console.log("Login button clicked.");
-        document.getElementById("status").textContent = "Redirecting to Google...";
-        
-        try {
-          const { error } = await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: {
-              // This redirect URL should match what you configured in your Google Cloud Console and Supabase settings
-              redirectTo: "https://kctklrigzowizlxlblat.supabase.co/auth/v1/callback"
+    <!-- Channel Grid -->
+    <div id="channelGrid"></div>
+
+    <div id="player-container">
+        <div id="player"></div>
+    </div>
+
+    <script>
+        let categorizedChannels = {};
+
+        async function loadPlaylist() {
+            let playlistUrl = document.getElementById("m3u_url").value;
+            if (!playlistUrl) {
+                alert("Please enter a valid M3U Playlist URL.");
+                return;
             }
-          });
-          if (error) {
-            console.error("OAuth error:", error);
-            document.getElementById("status").textContent = "Error: " + error.message;
-          }
-        } catch (err) {
-          console.error("Login error:", err);
-          document.getElementById("status").textContent = "Login failed: " + err;
+
+            try {
+                let response = await fetch(playlistUrl);
+                let text = await response.text();
+                let lines = text.split("\n");
+                categorizedChannels = {};
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith("#EXTINF")) {
+                        let groupMatch = lines[i].match(/group-title="(.*?)"/);
+                        let group = groupMatch ? groupMatch[1] : "Uncategorized";
+                        let name = lines[i].split(",")[1] || "Unknown Channel";
+                        let url = lines[i + 1] ? lines[i + 1].trim() : "";
+
+                        if (url.startsWith("http")) {
+                            if (!categorizedChannels[group]) {
+                                categorizedChannels[group] = [];
+                            }
+                            categorizedChannels[group].push({ name, url });
+                        }
+                    }
+                }
+
+                populateCategories();
+            } catch (error) {
+                alert("Failed to load M3U playlist. Check the URL and try again.");
+                console.error(error);
+            }
         }
-      });
-    });
-  </script>
+
+        function populateCategories() {
+            let categoryList = document.getElementById("categoryList");
+            categoryList.innerHTML = '<option value="">Select a Category</option>';
+            Object.keys(categorizedChannels).forEach(category => {
+                let option = document.createElement("option");
+                option.value = category;
+                option.textContent = category;
+                categoryList.appendChild(option);
+            });
+
+            updateChannels(); // Load first category by default
+        }
+
+        function updateChannels() {
+            let selectedCategory = document.getElementById("categoryList").value;
+            let channelGrid = document.getElementById("channelGrid");
+            channelGrid.innerHTML = "";
+
+            if (selectedCategory && categorizedChannels[selectedCategory]) {
+                categorizedChannels[selectedCategory].forEach(channel => {
+                    let div = document.createElement("div");
+                    div.classList.add("channel-card");
+                    div.textContent = channel.name;
+                    div.setAttribute("data-url", channel.url);
+                    div.onclick = () => playChannel(channel.url);
+                    channelGrid.appendChild(div);
+                });
+            }
+        }
+
+        function playChannel(url) {
+            if (url) {
+                jwplayer("player").setup({
+                    file: url,
+                    width: "100%",
+                    aspectratio: "16:9",
+                    autostart: true,
+                    skin: { name: "seven" }
+                });
+            }
+        }
+
+        function searchChannels() {
+            let searchQuery = document.getElementById("searchBox").value.toLowerCase();
+            let cards = document.getElementsByClassName("channel-card");
+
+            for (let card of cards) {
+                if (card.textContent.toLowerCase().includes(searchQuery)) {
+                    card.classList.remove("hidden");
+                } else {
+                    card.classList.add("hidden");
+                }
+            }
+        }
+    </script>
 </body>
 </html>

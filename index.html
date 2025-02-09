@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV Player</title>
+    <title>IPTV Player with Channel List</title>
     <script src="https://cdn.jwplayer.com/libraries/SAHhwvZq.js"></script>
     <style>
         body {
@@ -20,43 +20,45 @@
             background: black;
         }
 
-        .input-container {
+        .channel-list {
             max-width: 1200px;
             margin: 20px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
         }
 
-        input {
-            width: 70%;
+        .channel-item {
             padding: 10px;
-            margin-right: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: #007bff;
-            border: none;
-            color: white;
+            background: #333;
             cursor: pointer;
+            border-radius: 4px;
         }
 
-        button:hover {
-            background: #0056b3;
+        .channel-item:hover {
+            background: #444;
+        }
+
+        .loading {
+            display: none;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="input-container">
-        <input type="text" id="playlist-url" placeholder="Enter M3U8 URL here...">
-        <button onclick="loadStream()">Load Stream</button>
-    </div>
+    <div class="loading" id="loading">Loading channels...</div>
     <div id="player-container"></div>
+    <div class="channel-list" id="channel-list"></div>
 
     <script>
+        const playerContainer = document.getElementById('player-container');
+        const channelList = document.getElementById('channel-list');
+        const loading = document.getElementById('loading');
+
         // Initialize JW Player
-        const player = jwplayer('player-container').setup({
-            playlist: [{
-                file: 'https://cdn.jwplayer.com/manifests/4uDQUk1Z.m3u8' // Default sample stream
-            }],
+        const player = jwplayer(playerContainer).setup({
             width: '100%',
             aspectratio: '16:9',
             autostart: false,
@@ -64,23 +66,66 @@
             primary: 'html5'
         });
 
-        function loadStream() {
-            const streamUrl = document.getElementById('playlist-url').value;
-            if (streamUrl) {
-                player.load([{
-                    file: streamUrl
-                }]);
-                player.play();
+        // Function to parse M3U playlist
+        async function parsePlaylist(url) {
+            try {
+                loading.style.display = 'block';
+                const response = await fetch(url);
+                const text = await response.text();
+                const lines = text.split('\n');
+                const channels = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith('#EXTINF:')) {
+                        const channel = {
+                            name: lines[i].split(',')[1].trim(),
+                            url: lines[i + 1].trim()
+                        };
+                        channels.push(channel);
+                    }
+                }
+
+                displayChannels(channels);
+            } catch (error) {
+                console.error('Error loading playlist:', error);
+                alert('Error loading playlist. Please check the URL.');
+            } finally {
+                loading.style.display = 'none';
             }
+        }
+
+        // Function to display channels
+        function displayChannels(channels) {
+            channelList.innerHTML = '';
+            channels.forEach(channel => {
+                const channelItem = document.createElement('div');
+                channelItem.className = 'channel-item';
+                channelItem.textContent = channel.name;
+                channelItem.addEventListener('click', () => playChannel(channel.url));
+                channelList.appendChild(channelItem);
+            });
+        }
+
+        // Function to play selected channel
+        function playChannel(url) {
+            player.load([{
+                file: url,
+                title: 'Live Stream'
+            }]);
+            player.play();
         }
 
         // Handle errors
         player.on('error', function(e) {
             alert('Error loading stream: ' + e.message);
         });
+
+        // Load your playlist URL here
+        const playlistUrl = 'https://amitb3669.github.io/jiobe1.m3u/'; // Replace with your actual playlist URL
+        parsePlaylist(playlistUrl);
     </script>
 
-    <!-- Legal Disclaimer (IMPORTANT) -->
+    <!-- Legal Disclaimer -->
     <div style="max-width: 1200px; margin: 20px auto; color: #666; font-size: 12px;">
         <p>Disclaimer: This player is for educational purposes only. Use of this player to access unauthorized content is strictly prohibited. The user is solely responsible for ensuring they have proper rights to access any content played through this platform.</p>
     </div>

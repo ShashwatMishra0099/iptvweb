@@ -3,154 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV M3U Playlist</title>
+    <title>Hotspot Control</title>
     <style>
         body {
+            background-color: #121212;
+            color: white;
             font-family: Arial, sans-serif;
-            background: #121212;
-            color: white;
             text-align: center;
-            padding: 10px;
+            padding-top: 50px;
         }
-        input, button, select {
-            margin: 10px;
-            padding: 10px;
-            width: 80%;
-            max-width: 400px;
-            border-radius: 5px;
+        h1 {
+            color: #bb00ff;
+            text-shadow: 0px 0px 10px #ff00ff;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            margin: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #bb00ff, #ff0077);
             border: none;
-        }
-        button {
-            background: #6200ea;
-            color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px #ff0077;
             cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
         }
-        button:hover {
-            background: #3700b3;
-        }
-        select {
-            background: #333;
-            color: white;
-        }
-        #channelGrid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .channel-card {
-            background: #222;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-            text-align: center;
-        }
-        .channel-card:hover {
-            background: #444;
-        }
-        .hidden {
-            display: none;
+        .btn:hover {
+            background: linear-gradient(45deg, #ff0077, #bb00ff);
+            box-shadow: 0px 0px 25px #ff0077;
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
-    <h1>IPTV M3U Playlist</h1>
-    <input type="text" id="m3u_url" placeholder="Enter M3U Playlist URL" />
-    <button onclick="loadPlaylist()">Load Playlist</button>
-    <br>
 
-    <input type="text" id="searchBox" onkeyup="searchChannels()" placeholder="Search Channels...">
-    <select id="categoryList" onchange="updateChannels()">
-        <option value="">Select a Category</option>
-    </select>
+    <h1>Hotspot Control</h1>
 
-    <div id="channelGrid"></div>
+    <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/on" class="btn">Turn On Hotspot</a>
+    <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/off" class="btn">Turn Off Hotspot</a>
 
-    <script>
-        let categorizedChannels = {};
-
-        async function loadPlaylist() {
-            let playlistUrl = document.getElementById("m3u_url").value;
-            if (!playlistUrl) {
-                alert("Please enter a valid M3U Playlist URL.");
-                return;
-            }
-
-            try {
-                let response = await fetch(playlistUrl);
-                let text = await response.text();
-                let lines = text.split("\n");
-                categorizedChannels = {};
-
-                for (let i = 0; i < lines.length; i++) {
-                    if (lines[i].startsWith("#EXTINF")) {
-                        let groupMatch = lines[i].match(/group-title="(.*?)"/);
-                        let group = groupMatch ? groupMatch[1] : "Uncategorized";
-                        let name = lines[i].split(",")[1] || "Unknown Channel";
-                        let url = lines[i + 1] ? lines[i + 1].trim() : "";
-
-                        if (url.startsWith("http")) {
-                            if (!categorizedChannels[group]) {
-                                categorizedChannels[group] = [];
-                            }
-                            categorizedChannels[group].push({ name, url });
-                        }
-                    }
-                }
-
-                populateCategories();
-            } catch (error) {
-                alert("Failed to load M3U playlist. Check the URL and try again.");
-                console.error(error);
-            }
-        }
-
-        function populateCategories() {
-            let categoryList = document.getElementById("categoryList");
-            categoryList.innerHTML = '<option value="">Select a Category</option>';
-            Object.keys(categorizedChannels).forEach(category => {
-                let option = document.createElement("option");
-                option.value = category;
-                option.textContent = category;
-                categoryList.appendChild(option);
-            });
-
-            updateChannels();
-        }
-
-        function updateChannels() {
-            let selectedCategory = document.getElementById("categoryList").value;
-            let channelGrid = document.getElementById("channelGrid");
-            channelGrid.innerHTML = "";
-
-            if (selectedCategory && categorizedChannels[selectedCategory]) {
-                categorizedChannels[selectedCategory].forEach(channel => {
-                    let div = document.createElement("div");
-                    div.classList.add("channel-card");
-                    div.textContent = channel.name;
-                    div.onclick = () => openPlayer(channel.name, channel.url);
-                    channelGrid.appendChild(div);
-                });
-            }
-        }
-
-        function searchChannels() {
-            let searchQuery = document.getElementById("searchBox").value.toLowerCase();
-            let cards = document.getElementsByClassName("channel-card");
-
-            for (let card of cards) {
-                if (card.textContent.toLowerCase().includes(searchQuery)) {
-                    card.classList.remove("hidden");
-                } else {
-                    card.classList.add("hidden");
-                }
-            }
-        }
-
-        function openPlayer(name, url) {
-            window.location.href = `player.html?name=${encodeURIComponent(name)}&url=${encodeURIComponent(url)}`;
-        }
-    </script>
 </body>
 </html>

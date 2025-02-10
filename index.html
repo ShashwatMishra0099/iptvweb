@@ -31,7 +31,6 @@
       cursor: pointer;
       transition: all 0.3s ease;
       text-decoration: none;
-      display: none; /* Initially hidden */
     }
     .btn:hover {
       background: linear-gradient(45deg, #ff0077, #bb00ff);
@@ -79,7 +78,7 @@
     <p id="auth-status" style="color: red;"></p>
   </div>
 
-  <!-- Buttons (Hidden Until Authenticated) -->
+  <!-- Buttons (Initially Hidden) -->
   <div id="button-section" style="display: none;">
     <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/on" class="btn" onclick="saveAction('Turned On')">Turn On Hotspot</a>
     <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/off" class="btn" onclick="saveAction('Turned Off')">Turn Off Hotspot</a>
@@ -94,11 +93,16 @@
     function checkCode() {
       const code = document.getElementById("security-code").value;
       if (code === "SMX99") {
-        document.getElementById("auth-section").style.display = "none"; // Hide login section
-        document.getElementById("button-section").style.display = "block"; // Show buttons
+        localStorage.setItem("access_granted", "true"); // Save login state
+        showButtons();
       } else {
         document.getElementById("auth-status").textContent = "Incorrect Code!";
       }
+    }
+
+    function showButtons() {
+      document.getElementById("auth-section").style.display = "none"; // Hide login section
+      document.getElementById("button-section").style.display = "block"; // Show buttons
     }
 
     async function saveAction(action) {
@@ -121,6 +125,11 @@
       } else {
         document.getElementById("status").textContent = "No actions recorded";
       }
+    }
+
+    // Auto-login if correct code was already entered
+    if (localStorage.getItem("access_granted") === "true") {
+      showButtons();
     }
 
     getLastAction();

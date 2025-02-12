@@ -30,7 +30,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gradient-to-r from-gray-900 to-black text-gray-100" style="font-family: 'Poppins', sans-serif;">
-  <!-- Login Section -->
+  <!-- Main Login Section -->
   <div id="login-box" class="min-h-screen flex items-center justify-center animate-fadeIn">
     <div class="bg-white/10 backdrop-blur-md rounded-xl p-8 shadow-xl w-80 border border-white/20">
       <h2 class="text-2xl font-bold text-center mb-6">Security Login</h2>
@@ -61,22 +61,22 @@
       <!-- Location Update Section -->
       <h2 class="text-3xl font-bold mb-6">Location Update</h2>
       <div class="flex space-x-4 mb-4">
-        <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/hey"
-           class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
-           Get Location
-        </a>
-        <!-- When Results is clicked, we load results and switch view -->
-        <button onclick="showResultsView()" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
-           Results
+        <!-- Protected Get Location Button -->
+        <button onclick="attemptLocationAction('get')" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
+          Get Location
+        </button>
+        <!-- Protected Results Button -->
+        <button onclick="attemptLocationAction('results')" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
+          Results
         </button>
       </div>
-      <!-- (Optionally, you can display a small placeholder here) -->
+      <!-- Optionally, you can display a small placeholder here -->
       <div id="location-placeholder" class="w-full max-w-lg"></div>
     </div>
 
     <!-- Results View Container (hidden initially) -->
     <div id="results-view" class="hidden relative min-h-screen flex flex-col items-center justify-center animate-fadeIn">
-      <!-- GO BACK button with same styling as other buttons -->
+      <!-- GO BACK button with same styling -->
       <button onclick="goBack()" class="absolute top-4 left-4 px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
         GO BACK
       </button>
@@ -85,13 +85,29 @@
     </div>
   </div>
 
+  <!-- Location Update Security Modal (hidden initially) with darker background -->
+  <div id="location-login-box" class="hidden fixed inset-0 flex items-center justify-center bg-black/80">
+    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl w-64 border border-white/20">
+      <h2 class="text-xl font-bold text-center mb-4">Location Security</h2>
+      <input type="password" id="location-security-code" placeholder="Enter Code" class="w-full px-4 py-2 mb-4 rounded border border-white/20 bg-transparent focus:outline-none focus:border-blue-400" />
+      <button onclick="checkLocationCode()" class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors border border-white/20">
+        Unlock
+      </button>
+      <p id="location-error-message" class="text-center text-red-400 mt-2 hidden">Access Denied</p>
+    </div>
+  </div>
+
   <script>
     // Initialize Supabase with your project URL and API key.
     const SUPABASE_URL = "https://kctklrigzowizlxlblat.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Global variable to track if location update section is unlocked
+    let locationAuth = false;
+    let pendingLocationAction = null; // will hold the action type ("get" or "results")
 
-    // Check security code and unlock content.
+    // Check main security code and unlock content.
     function checkCode() {
       const code = document.getElementById("security-code").value;
       if (code === "xo") {
@@ -133,7 +149,41 @@
       }
     }
 
-    // Fetch and display the most recent 5 location records (URL and time)
+    // Function to attempt location actions ("get" or "results").
+    function attemptLocationAction(actionType) {
+      if (locationAuth) {
+        if (actionType === "get") {
+          window.location.href = "https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/hey";
+        } else if (actionType === "results") {
+          showResultsView();
+        }
+      } else {
+        pendingLocationAction = actionType;
+        // Show the location security modal.
+        document.getElementById("location-login-box").classList.remove("hidden");
+      }
+    }
+
+    // Check the location security code.
+    function checkLocationCode() {
+      const code = document.getElementById("location-security-code").value;
+      if (code === "ooxx") {
+        locationAuth = true;
+        document.getElementById("location-login-box").classList.add("hidden");
+        document.getElementById("location-error-message").classList.add("hidden");
+        // Execute the pending location action.
+        if (pendingLocationAction === "get") {
+          window.location.href = "https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/hey";
+        } else if (pendingLocationAction === "results") {
+          showResultsView();
+        }
+        pendingLocationAction = null;
+      } else {
+        document.getElementById("location-error-message").classList.remove("hidden");
+      }
+    }
+
+    // Fetch and display the most recent 5 location records (URL and time) from "shared_locations" table.
     async function loadLocationResults() {
       const { data, error } = await supabaseClient
         .from("shared_locations")
@@ -174,12 +224,12 @@
       }
     }
 
-    // Called when Results button is clicked.
+    // Called when Results button is clicked (after location security is verified).
     async function showResultsView() {
       await loadLocationResults();
-      // Hide the main content view
+      // Hide the main content view.
       document.getElementById("main-content").classList.add("hidden");
-      // Show the results view
+      // Show the results view.
       document.getElementById("results-view").classList.remove("hidden");
     }
 

@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hotspot & Location Control</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Configure Tailwind with custom animation -->
@@ -27,45 +29,60 @@
   <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body class="bg-gradient-to-r from-gray-900 to-black text-gray-100" style="font-family: 'Poppins', sans-serif;">
   <!-- Login Section -->
   <div id="login-box" class="min-h-screen flex items-center justify-center animate-fadeIn">
-    <div class="bg-gray-800 rounded-lg p-8 shadow-md w-80">
-      <h2 class="text-2xl font-semibold mb-6 text-center">Enter Security Code</h2>
-      <input type="password" id="security-code" placeholder="Enter Code" class="w-full px-4 py-2 rounded border border-gray-600 bg-gray-700 focus:outline-none focus:border-purple-400" />
-      <button onclick="checkCode()" class="mt-4 w-full py-2 bg-purple-600 rounded hover:bg-purple-500 transition-colors">Submit</button>
-      <p id="error-message" class="mt-2 text-center text-red-500 hidden">Access Denied</p>
+    <div class="bg-white/10 backdrop-blur-md rounded-xl p-8 shadow-xl w-80 border border-white/20">
+      <h2 class="text-2xl font-bold text-center mb-6">Security Login</h2>
+      <input type="password" id="security-code" placeholder="Enter Code" class="w-full px-4 py-2 mb-4 rounded border border-white/20 bg-transparent focus:outline-none focus:border-blue-400" />
+      <button onclick="checkCode()" class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors border border-white/20">
+        Submit
+      </button>
+      <p id="error-message" class="text-center text-red-400 mt-2 hidden">Access Denied</p>
     </div>
   </div>
 
-  <!-- Main Content (hidden initially) -->
-  <div id="content" class="hidden min-h-screen flex flex-col items-center justify-center animate-fadeIn">
-    <!-- Hotspot Control Section -->
-    <h1 class="text-4xl font-bold mb-8">Hotspot Control</h1>
-    <div class="flex space-x-6 mb-8">
-      <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/on" 
-         class="px-6 py-3 bg-gray-700 rounded shadow hover:bg-gray-600 transition-colors" 
-         onclick="saveAction('Turned On')">Turn On Hotspot</a>
-      <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/off" 
-         class="px-6 py-3 bg-gray-700 rounded shadow hover:bg-gray-600 transition-colors" 
-         onclick="saveAction('Turned Off')">Turn Off Hotspot</a>
-    </div>
-    <p id="status" class="text-xl mb-12">Loading recent action...</p>
+  <!-- Main Content Container (hidden initially) -->
+  <div id="content" class="hidden min-h-screen animate-fadeIn">
+    <!-- Main Content (wrapped in a container to hide when showing results) -->
+    <div id="main-content" class="flex flex-col items-center justify-center">
+      <!-- Hotspot Control Section -->
+      <h1 class="text-4xl font-extrabold mb-8 text-center">Hotspot Control</h1>
+      <div class="flex space-x-4 mb-8">
+        <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/on" 
+           class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20"
+           onclick="saveAction('Turned On')">Turn On Hotspot</a>
+        <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/off" 
+           class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20"
+           onclick="saveAction('Turned Off')">Turn Off Hotspot</a>
+      </div>
+      <p id="status" class="text-xl mb-12">Loading recent action...</p>
 
-    <!-- Location Update Section -->
-    <h2 class="text-3xl font-semibold mb-6">Location Update</h2>
-    <div class="flex space-x-6 mb-4">
-      <!-- Get Location Button (redirects) -->
-      <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/hey"
-         class="px-6 py-3 bg-gray-700 rounded shadow hover:bg-gray-600 transition-colors">
-         Get Location
-      </a>
-      <!-- Results Button (fetches data) -->
-      <button onclick="getLatestLocation()" class="px-6 py-3 bg-gray-700 rounded shadow hover:bg-gray-600 transition-colors">
-         Results
-      </button>
+      <!-- Location Update Section -->
+      <h2 class="text-3xl font-bold mb-6">Location Update</h2>
+      <div class="flex space-x-4 mb-4">
+        <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/hey"
+           class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
+           Get Location
+        </a>
+        <!-- When Results is clicked, we load results and switch view -->
+        <button onclick="showResultsView()" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
+           Results
+        </button>
+      </div>
+      <!-- (Optionally, you can display a small placeholder here) -->
+      <div id="location-placeholder" class="w-full max-w-lg"></div>
     </div>
-    <p id="location-result" class="text-xl">No location recorded</p>
+
+    <!-- Results View Container (hidden initially) -->
+    <div id="results-view" class="hidden relative min-h-screen flex flex-col items-center justify-center animate-fadeIn">
+      <!-- GO BACK button with same styling as other buttons -->
+      <button onclick="goBack()" class="absolute top-4 left-4 px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg shadow transition-all border border-white/20">
+        GO BACK
+      </button>
+      <!-- Table container for displaying location results -->
+      <div id="location-result" class="w-full max-w-lg"></div>
+    </div>
   </div>
 
   <script>
@@ -116,24 +133,60 @@
       }
     }
 
-    // Fetch and display the most recent location URL and created_at from the "shared_locations" table.
-    async function getLatestLocation() {
+    // Fetch and display the most recent 5 location records (URL and time)
+    async function loadLocationResults() {
       const { data, error } = await supabaseClient
         .from("shared_locations")
         .select("location_url, created_at")
         .order("id", { ascending: false })
-        .limit(1);
+        .limit(5);
       if (error) {
         console.error("Error fetching latest location:", error);
-        document.getElementById("location-result").textContent = "Error fetching location";
+        document.getElementById("location-result").innerHTML = "<p class='text-xl'>Error fetching location</p>";
       } else if (data && data.length > 0) {
-        const locationUrl = data[0].location_url;
-        // Convert the created_at timestamp to a readable format
-        const time = new Date(data[0].created_at).toLocaleString();
-        document.getElementById("location-result").textContent = "Location URL: " + locationUrl + " | Time: " + time;
+        let tableRows = "";
+        data.forEach(record => {
+          const locationUrl = record.location_url;
+          const time = new Date(record.created_at).toLocaleString();
+          tableRows += `<tr class="bg-white/10">
+                          <td class="px-4 py-2 border border-white/20">
+                            <a href="${locationUrl}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-300">
+                              ${locationUrl}
+                            </a>
+                          </td>
+                          <td class="px-4 py-2 border border-white/20">${time}</td>
+                        </tr>`;
+        });
+        document.getElementById("location-result").innerHTML =
+          `<table class="min-w-full table-auto border border-white/20">
+            <thead class="bg-white/20">
+              <tr>
+                <th class="px-4 py-2 border border-white/20 text-left">Location URL</th>
+                <th class="px-4 py-2 border border-white/20 text-left">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>`;
       } else {
-        document.getElementById("location-result").textContent = "No location recorded";
+        document.getElementById("location-result").innerHTML = "<p class='text-xl'>No location recorded</p>";
       }
+    }
+
+    // Called when Results button is clicked.
+    async function showResultsView() {
+      await loadLocationResults();
+      // Hide the main content view
+      document.getElementById("main-content").classList.add("hidden");
+      // Show the results view
+      document.getElementById("results-view").classList.remove("hidden");
+    }
+
+    // Go back to the main content view from results.
+    function goBack() {
+      document.getElementById("results-view").classList.add("hidden");
+      document.getElementById("main-content").classList.remove("hidden");
     }
   </script>
 </body>

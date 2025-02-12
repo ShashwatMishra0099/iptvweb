@@ -4,114 +4,76 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hotspot Control</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            fadeInUp: "fadeInUp 1s ease-out",
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      background-color: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 50px;
-    }
-    h1 {
-      color: #bb00ff;
-      text-shadow: 0px 0px 10px #ff00ff;
-    }
-    .btn {
-      display: inline-block;
-      padding: 15px 40px;
-      margin: 20px;
-      font-size: 20px;
-      font-weight: bold;
-      color: white;
-      background: linear-gradient(45deg, #bb00ff, #ff0077);
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0px 0px 15px #ff0077;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-    }
-    .btn:hover {
-      background: linear-gradient(45deg, #ff0077, #bb00ff);
-      box-shadow: 0px 0px 25px #ff0077;
-      transform: scale(1.1);
-    }
-    #status {
-      margin-top: 30px;
-      font-size: 22px;
-      font-weight: bold;
-      color: #ff0077;
-    }
-    #login-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    #login-box input {
-      padding: 10px;
-      font-size: 18px;
-      margin-top: 10px;
-      border: 2px solid #ff0077;
-      background-color: #222;
-      color: white;
-      border-radius: 5px;
-    }
-    #login-box button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 18px;
-      background: linear-gradient(45deg, #bb00ff, #ff0077);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #login-box button:hover {
-      background: linear-gradient(45deg, #ff0077, #bb00ff);
-    }
-  </style>
 </head>
-<body>
-
+<body class="bg-gray-900 text-white">
   <!-- Login Section -->
-  <div id="login-box">
-    <h1>Enter Security Code</h1>
-    <input type="password" id="security-code" placeholder="Enter Code" />
-    <button onclick="checkCode()">Submit</button>
-    <p id="error-message" style="color: red; display: none;">Access Denied</p>
+  <div id="login-box" class="min-h-screen flex flex-col justify-center items-center animate-fadeInUp">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg max-w-sm w-full">
+      <h1 class="text-2xl font-semibold mb-4 text-center">Enter Security Code</h1>
+      <input type="password" id="security-code" placeholder="Enter Code" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-indigo-500" />
+      <button onclick="checkCode()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 transition-colors py-2 rounded">Submit</button>
+      <p id="error-message" class="text-red-500 mt-2 hidden">Access Denied</p>
+    </div>
   </div>
 
-  <!-- Main Content (Hidden initially) -->
-  <div id="content" style="display: none;">
-    <h1>Hotspot Control</h1>
-
-    <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/on" class="btn" onclick="saveAction('Turned On')">Turn On Hotspot</a>
-    <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/off" class="btn" onclick="saveAction('Turned Off')">Turn Off Hotspot</a>
-
-    <p id="status">Loading recent action...</p>
+  <!-- Main Content (Hidden Initially) -->
+  <div id="content" class="hidden min-h-screen flex flex-col justify-center items-center animate-fadeInUp">
+    <h1 class="text-4xl font-bold mb-8">Hotspot Control</h1>
+    <div class="space-x-4">
+      <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/on" 
+         class="inline-block px-8 py-4 bg-gray-700 hover:bg-gray-600 transition-all rounded text-lg" 
+         onclick="saveAction('Turned On')">Turn On Hotspot</a>
+      <a href="https://trigger.macrodroid.com/2caf46a1-a418-46cd-8da2-61e3a8d8dba0/off" 
+         class="inline-block px-8 py-4 bg-gray-700 hover:bg-gray-600 transition-all rounded text-lg" 
+         onclick="saveAction('Turned Off')">Turn Off Hotspot</a>
+    </div>
+    <p id="status" class="mt-8 text-xl">Loading recent action...</p>
   </div>
 
   <script>
+    // Initialize Supabase with your project URL and API key.
     const SUPABASE_URL = "https://kctklrigzowizlxlblat.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdGtscmlnem93aXpseGxibGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMDAxODgsImV4cCI6MjA1NDY3NjE4OH0.SiqrHjSbZsEEcqtkjnNPCgR839HJIeO_uqhYk7E83Hk";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Function to check the security code.
     function checkCode() {
-      let enteredCode = document.getElementById("security-code").value;
+      const enteredCode = document.getElementById("security-code").value;
       if (enteredCode === "xo") {
-        document.getElementById("login-box").style.display = "none";
-        document.getElementById("content").style.display = "block";
-        getLastAction(); // Load last action after unlocking
+        document.getElementById("login-box").classList.add("hidden");
+        document.getElementById("content").classList.remove("hidden");
+        getLastAction();
       } else {
-        document.getElementById("error-message").style.display = "block";
+        document.getElementById("error-message").classList.remove("hidden");
       }
     }
 
+    // Insert an action into the "hotspot_actions" table.
     async function saveAction(action) {
-      const { data, error } = await supabaseClient.from("hotspot_actions").insert([{ action }]);
+      const { data, error } = await supabaseClient
+        .from("hotspot_actions")
+        .insert([{ action }]);
       if (error) {
         console.error("Error inserting action:", error);
       } else {
@@ -120,13 +82,13 @@
       }
     }
 
+    // Retrieve and display the most recent action.
     async function getLastAction() {
       const { data, error } = await supabaseClient
         .from("hotspot_actions")
         .select("action")
         .order("id", { ascending: false })
         .limit(1);
-
       if (error) {
         console.error("Error fetching last action:", error);
         document.getElementById("status").textContent = "Error fetching data";
